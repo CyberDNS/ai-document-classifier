@@ -75,11 +75,12 @@ def classify_document(client, text, sources, destinations, classifications, desc
 
     system_prompt = f"""
     Act as a document management agent that is responsible for classifying documents at home. 
-    If source is a name of a person, then put the first name then the last name.
-    Possible sources are: "{sources}" but never: "{destinations}".
+    Names of a person should always be put in this order, the first name then the last name.
     Possible destinations are: "{destinations}".
     Possible classifications are: "{classifications}".
     If the content of the document matches the following description suggestions please use the same format: {description_suggestions}.
+    Sources is normally a company or other entity that is the origin of the document. Examples are {sources}.
+    Sources should never be a name from this list: {destinations}. It is better to leave the source blank than to use a name from the destination list.
 
     Here is an example of an output:
     {{
