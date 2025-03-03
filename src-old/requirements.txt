@@ -1,0 +1,10 @@
+openai
+PyMuPDF
+Flask
+pytesseract
+pillow
+smbprotocol
+opencv-python-headless
+easyocr
+torch==1.13.1+cpu
+python-dotenv

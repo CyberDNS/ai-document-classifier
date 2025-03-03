@@ -2,7 +2,7 @@
 
 # Path to input and output directories (on your local machine)
 INPUT_DIR="/Users/david/dms-input"
-OUTPUT_DIR="/Users/david/OneDrive/Documents/DMS"
+OUTPUT_DIR="/Users/david/dms-output"
 
 # Docker run command
 docker run -p 5123:5000 \
