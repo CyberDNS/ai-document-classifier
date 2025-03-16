@@ -9,6 +9,11 @@ sudo apt-get install -y cifs-utils
 pip install --upgrade pip
 pip install --no-cache-dir -r requirements.txt 
 
+# NPM install in the frontend folder
+cd ai-document-classifier-vuetify
+npm install
+cd ..
+
 # Set locale to en_US.UTF-8
 sudo apt-get install -y locales
 sudo locale-gen en_US.UTF-8

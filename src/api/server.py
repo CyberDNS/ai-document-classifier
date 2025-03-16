@@ -1,9 +1,10 @@
-from flask import Flask, send_from_directory, jsonify, request, send_file
+from flask import Flask, send_from_directory, jsonify, request, send_file, Response
 from flask_cors import CORS
 import os
 import shutil
 import json
 from dotenv import load_dotenv
+import time
 
 # Load environment variables from .env file
 load_dotenv()
@@ -191,6 +192,26 @@ def add_destination():
         return jsonify({"message": "Destination added successfully"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@app.route('/sse/documents', methods=['GET'])
+def sse_documents():
+    def generate():
+        previous_docs = set()
+        while True:
+            try:
+                files = os.listdir(OCR_OUTPUT_PATH)
+                current_docs = set(f for f in files if os.path.isfile(os.path.join(OCR_OUTPUT_PATH, f)) and f.lower().endswith('.pdf.json'))
+                if current_docs != previous_docs:
+                    docs = sorted(current_docs)
+                    data = json.dumps({"totalDocuments": len(docs)})
+                    yield f"data: {data}\n\n"
+                    previous_docs = current_docs
+                time.sleep(5)  # Adjust the interval as needed
+            except Exception as e:
+                yield f"data: {{\"error\": \"{str(e)}\"}}\n\n"
+                time.sleep(5)
+
+    return Response(generate(), mimetype='text/event-stream')
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5298)

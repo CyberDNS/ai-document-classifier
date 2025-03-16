@@ -5,6 +5,7 @@
         <v-btn @click="prevDocument" :disabled="currentIndex === 0" v-if="documents.length > 0">Previous</v-btn>
         <v-btn @click="nextDocument" :disabled="currentIndex === documents.length - 1" v-if="documents.length > 0">Next</v-btn>
         <v-btn @click="fetchDocuments">Refresh</v-btn>
+        <span v-if="documents.length > 0">{{ currentIndex + 1 }}/{{ totalDocuments }}</span>
       </v-col>
     </v-row>
     <v-row v-if="documents.length > 0">
@@ -65,13 +66,12 @@
 </template>
 
 <script>
-import axios from 'axios';
-
 export default {
   data() {
     return {
       documents: [],
       currentIndex: 0,
+      totalDocuments: 0,
       metadata: {
         date: '',
         category: '',
@@ -90,7 +90,8 @@ export default {
       return this.documents[this.currentIndex];
     },
     documentUrl() {
-      return `/documents/${this.currentDocument}`;
+      const baseURL = this.$axios.defaults.baseURL;
+      return `${baseURL}/documents/${this.currentDocument}`;
     },
     proposedFileName() {
       const formattedDate = this.metadata.date.replace(/-/g, '');
@@ -100,12 +101,14 @@ export default {
   mounted() {
     this.fetchDocuments();
     this.fetchConfig();
+    this.setupSSE();
   },
   methods: {
     async fetchDocuments() {
       try {
-        const response = await axios.get('/documents');
+        const response = await this.$axios.get('/documents');
         this.documents = response.data;
+        this.totalDocuments = this.documents.length;
         this.fetchMetadata();
       } catch (error) {
         console.error('Error fetching documents:', error);
@@ -114,7 +117,7 @@ export default {
     async fetchMetadata() {
       if (this.currentDocument) {
         try {
-          const response = await axios.get(`/documents/${this.currentDocument}/metadata`);
+          const response = await this.$axios.get(`/documents/${this.currentDocument}/metadata`);
           this.metadata = response.data;
         } catch (error) {
           console.error('Error fetching metadata:', error);
@@ -124,9 +127,9 @@ export default {
     async fetchConfig() {
       try {
         const [categoriesResponse, sourcesResponse, destinationsResponse] = await Promise.all([
-          axios.get('/config/categories'),
-          axios.get('/config/sources'),
-          axios.get('/config/destinations')
+          this.$axios.get('/config/categories'),
+          this.$axios.get('/config/sources'),
+          this.$axios.get('/config/destinations')
         ]);
         this.categories = categoriesResponse.data;
         this.sources = sourcesResponse.data;
@@ -137,7 +140,7 @@ export default {
     },
     async saveFile() {
       try {
-        await axios.post('/documents/save', {
+        await this.$axios.post('/documents/save', {
           originalFilename: this.currentDocument,
           renamedFilename: this.proposedFileName,
           metadata: this.metadata
@@ -149,7 +152,7 @@ export default {
     },
     async addCategory() {
       try {
-        await axios.post('/config/categories', { category: this.metadata.category });
+        await this.$axios.post('/config/categories', { category: this.metadata.category });
         this.fetchConfig();
       } catch (error) {
         console.error('Error adding category:', error);
@@ -157,7 +160,7 @@ export default {
     },
     async addSource() {
       try {
-        await axios.post('/config/sources', { source: this.metadata.source });
+        await this.$axios.post('/config/sources', { source: this.metadata.source });
         this.fetchConfig();
       } catch (error) {
         console.error('Error adding source:', error);
@@ -165,7 +168,7 @@ export default {
     },
     async addDestination() {
       try {
-        await axios.post('/config/destinations', { destination: this.metadata.destination });
+        await this.$axios.post('/config/destinations', { destination: this.metadata.destination });
         this.fetchConfig();
       } catch (error) {
         console.error('Error adding destination:', error);
@@ -182,6 +185,15 @@ export default {
         this.currentIndex--;
         this.fetchMetadata();
       }
+    },
+    setupSSE() {
+      const baseURL = this.$axios.defaults.baseURL;
+      const eventSource = new EventSource(`${baseURL}/sse/documents`);
+      eventSource.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        this.totalDocuments = data.totalDocuments;
+        this.fetchDocuments();
+      };
     }
   }
 };
