@@ -1,26 +1,26 @@
 {
-    "categories": [
-      "INVOICES_AND_WARRANTIES",
-      "HEALTHCARE",
-      "PETS",
-      "HOME_RELATED",
-      "CARS_RELATED",
-      "WORK_RELATED",
-      "BANKING",
-      "TAX",
-      "LICENCES",
-      "OTHERS"
-    ],
-    "sources": [
-        "Post Luxembourg",
-        "Banque Raiffeisen",
-        "Consorsbank",
-        "Südeifelwerke",
-        "Verbandsgemeinde Südeifel"
-    ],
-    "destinations": [
-        "David Ney",
-        "Laurence Friess",
-        "Famille Ney-Friess"
-    ]
-  }
+  "categories": [
+    "INVOICES_AND_WARRANTIES",
+    "HEALTHCARE",
+    "PETS",
+    "HOME_RELATED",
+    "CARS_RELATED",
+    "WORK_RELATED",
+    "BANKING",
+    "TAX",
+    "LICENCES",
+    "OTHERS"
+  ],
+  "sources": [
+    "Post Luxembourg",
+    "Banque Raiffeisen",
+    "Consorsbank",
+    "Südeifelwerke",
+    "Verbandsgemeinde Südeifel"
+  ],
+  "destinations": [
+    "David Ney",
+    "Laurence Friess",
+    "Famille Ney-Friess"
+  ]
+}

@@ -67,8 +67,6 @@
 <script>
 import axios from 'axios';
 
-const baseUrl = 'http://localhost:5298'; // Adjust the base URL as needed
-
 export default {
   data() {
     return {
@@ -92,7 +90,7 @@ export default {
       return this.documents[this.currentIndex];
     },
     documentUrl() {
-      return `${baseUrl}/documents/${this.currentDocument}`;
+      return `/documents/${this.currentDocument}`;
     },
     proposedFileName() {
       const formattedDate = this.metadata.date.replace(/-/g, '');
@@ -106,7 +104,7 @@ export default {
   methods: {
     async fetchDocuments() {
       try {
-        const response = await axios.get(`${baseUrl}/documents`);
+        const response = await axios.get('/documents');
         this.documents = response.data;
         this.fetchMetadata();
       } catch (error) {
@@ -116,7 +114,7 @@ export default {
     async fetchMetadata() {
       if (this.currentDocument) {
         try {
-          const response = await axios.get(`${baseUrl}/documents/${this.currentDocument}/metadata`);
+          const response = await axios.get(`/documents/${this.currentDocument}/metadata`);
           this.metadata = response.data;
         } catch (error) {
           console.error('Error fetching metadata:', error);
@@ -126,9 +124,9 @@ export default {
     async fetchConfig() {
       try {
         const [categoriesResponse, sourcesResponse, destinationsResponse] = await Promise.all([
-          axios.get(`${baseUrl}/config/categories`),
-          axios.get(`${baseUrl}/config/sources`),
-          axios.get(`${baseUrl}/config/destinations`)
+          axios.get('/config/categories'),
+          axios.get('/config/sources'),
+          axios.get('/config/destinations')
         ]);
         this.categories = categoriesResponse.data;
         this.sources = sourcesResponse.data;
@@ -139,7 +137,7 @@ export default {
     },
     async saveFile() {
       try {
-        await axios.post(`${baseUrl}/documents/save`, {
+        await axios.post('/documents/save', {
           originalFilename: this.currentDocument,
           renamedFilename: this.proposedFileName,
           metadata: this.metadata
@@ -151,7 +149,7 @@ export default {
     },
     async addCategory() {
       try {
-        await axios.post(`${baseUrl}/config/categories`, { category: this.metadata.category });
+        await axios.post('/config/categories', { category: this.metadata.category });
         this.fetchConfig();
       } catch (error) {
         console.error('Error adding category:', error);
@@ -159,7 +157,7 @@ export default {
     },
     async addSource() {
       try {
-        await axios.post(`${baseUrl}/config/sources`, { source: this.metadata.source });
+        await axios.post('/config/sources', { source: this.metadata.source });
         this.fetchConfig();
       } catch (error) {
         console.error('Error adding source:', error);
@@ -167,7 +165,7 @@ export default {
     },
     async addDestination() {
       try {
-        await axios.post(`${baseUrl}/config/destinations`, { destination: this.metadata.destination });
+        await axios.post('/config/destinations', { destination: this.metadata.destination });
         this.fetchConfig();
       } catch (error) {
         console.error('Error adding destination:', error);

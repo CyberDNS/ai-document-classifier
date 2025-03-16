@@ -2,6 +2,7 @@ import time
 import os
 import shutil
 import json
+import logging
 from threading import Thread
 from watchdog.observers.polling import PollingObserver
 from watchdog.events import FileSystemEventHandler
@@ -9,6 +10,15 @@ from dotenv import load_dotenv
 from api import start_flask_server
 from ocr.adobe_ocr_api import AdobeOCR
 from ocr.mistral_ocr_api import MistralOCR
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler()
+    ]
+)
 
 # Load environment variables from .env file
 load_dotenv()
@@ -28,7 +38,7 @@ class ScanHandler(FileSystemEventHandler):
         if event.is_directory:
             return
         if event.src_path.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp', '.tiff', '.pdf')):
-            print(f"File created: {event.src_path}")
+            logging.info(f"File created: {event.src_path}")
             thread = Thread(target=self.copy_and_verify_file, args=(event.src_path,))
             thread.start()
 
@@ -40,13 +50,13 @@ class ScanHandler(FileSystemEventHandler):
         start_time = time.time()
         while True:
             if self.is_file_fully_written(src_path):
-                print(f"File {dest_path} is fully written.")
+                logging.info(f"File {dest_path} is fully written.")
                 shutil.move(src_path, dest_path)
-                print(f"Moved file to: {dest_path}")
+                logging.info(f"Moved file to: {dest_path}")
                 run_ocr(dest_path)  # Run OCR after moving the file
                 break
             if time.time() - start_time > timeout:
-                print(f"Timeout waiting for file {dest_path} to be fully written.")
+                logging.warning(f"Timeout waiting for file {dest_path} to be fully written.")
                 break
             time.sleep(1)
 
@@ -64,14 +74,14 @@ def run_ocr(file_path):
         adobe_ocr = AdobeOCR()
         output_image_path = os.path.join(IMAGES_PATH, os.path.basename(file_path) + '.jpg')
         adobe_ocr.extract_images_from_pdf(file_path, output_image_path)
-        print(f"Extracted image from PDF: {output_image_path}")
+        logging.info(f"Extracted image from PDF: {output_image_path}")
 
         mistral_ocr = MistralOCR()
         language = mistral_ocr.detect_language(output_image_path)
 
         output_ocr_path = os.path.join(OCR_OUTPUT_PATH, os.path.basename(file_path))
         adobe_ocr.ocr(file_path, output_ocr_path, language)
-        print(f"OCR completed for {file_path}. Output saved to {output_ocr_path}")
+        logging.info(f"OCR completed for {file_path}. Output saved to {output_ocr_path}")
 
         classify_pdf(output_ocr_path, mistral_ocr)
 
@@ -79,24 +89,24 @@ def run_ocr(file_path):
         mistral_ocr = MistralOCR()
         classification_response = mistral_ocr.classify_document(file_path)
         if classification_response:
-            print(f"Classification completed for {file_path}. Classification response: {classification_response}")
+            logging.info(f"Classification completed for {file_path}. Classification response: {classification_response}")
             json_output_path = os.path.join(IMAGES_PATH, os.path.basename(file_path) + '.json')
             with open(json_output_path, 'w') as json_file:
                 json.dump(classification_response, json_file)
-            print(f"Classification result saved to {json_output_path}")
+            logging.info(f"Classification result saved to {json_output_path}")
         else:
-            print(f"Error during document classification for {file_path}")
+            logging.error(f"Error during document classification for {file_path}")
 
 def classify_pdf(file_path, mistral_ocr):
     classification_response = mistral_ocr.classify_document_from_pdf(file_path)
     if classification_response:
-        print(f"Classification completed for {file_path}. Classification response: {classification_response}")
+        logging.info(f"Classification completed for {file_path}. Classification response: {classification_response}")
         json_output_path = os.path.join(OCR_OUTPUT_PATH, os.path.basename(file_path) + '.json')
         with open(json_output_path, 'w') as json_file:
             json.dump(classification_response, json_file)
-        print(f"Classification result saved to {json_output_path}")
+        logging.info(f"Classification result saved to {json_output_path}")
     else:
-        print(f"Error during document classification for {file_path}")
+        logging.error(f"Error during document classification for {file_path}")
 
 def classify_existing_pdfs():
     """Classify all PDFs in the OCR folder that have not yet been classified."""
@@ -111,7 +121,7 @@ def classify_existing_pdfs():
 
 def start_smb_watcher():
     """Starts the SMB share watcher."""
-    print("Initializing ScanHandler...")
+    logging.info("Initializing ScanHandler...")
     classify_existing_pdfs()  # Classify existing PDFs on startup
 
     event_handler = ScanHandler()
@@ -120,24 +130,24 @@ def start_smb_watcher():
     
     # Check if the watch path exists
     if not os.path.exists(watch_path):
-        print(f"Error: Watch path does not exist: {watch_path}")
+        logging.error(f"Error: Watch path does not exist: {watch_path}")
         return
     
-    print(f"Watching path: {watch_path}")
+    logging.info(f"Watching path: {watch_path}")
     observer.schedule(event_handler, watch_path, recursive=False)
     observer.start()
-    print("Observer started.")
+    logging.info("Observer started.")
     try:
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
-        print("Stopping observer...")
+        logging.info("Stopping observer...")
         observer.stop()
     observer.join()
-    print("Observer stopped.")
+    logging.info("Observer stopped.")
 
 if __name__ == "__main__":
-    print("Starting SMB watcher and Flask server...")
+    logging.info("Starting SMB watcher and Flask server...")
     watcher_thread = Thread(target=start_smb_watcher)
     flask_thread = Thread(target=start_flask_server)
     watcher_thread.start()
