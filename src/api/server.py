@@ -1,4 +1,4 @@
-from flask import Flask, send_from_directory, jsonify, request
+from flask import Flask, send_from_directory, jsonify, request, send_file
 from flask_cors import CORS
 import os
 import shutil
@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='../frontend', static_url_path='/')
 CORS(app)  # Enable CORS
 
 # Get the data path from environment variables
@@ -37,6 +37,22 @@ def reload_config(config_filepath, default_config):
     return config
 
 config = reload_config(config_filepath, default_config)
+
+@app.route('/')
+def serve_frontend():
+    return send_from_directory(app.static_folder, 'index.html')
+
+@app.route('/<path:path>')
+def serve_static_files(path):
+    return send_from_directory(app.static_folder, path)
+
+@app.route('/config.json')
+def serve_config():
+    api_url = os.getenv('VUE_APP_API_URL', 'http://localhost:5298')
+    config_data = {
+        "VUE_APP_API_URL": api_url
+    }
+    return jsonify(config_data)
 
 @app.route('/images', methods=['GET'])
 def list_images():
@@ -177,4 +193,4 @@ def add_destination():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0', port=5298)

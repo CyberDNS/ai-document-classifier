@@ -1,4 +1,15 @@
-# Use a base image with Python pre-installed
+# Stage 1: Build the frontend
+FROM node:18 AS frontend-builder
+
+WORKDIR /app/frontend
+
+COPY ai-document-classifier-vuetify/package.json ./
+RUN yarn install
+
+COPY ai-document-classifier-vuetify ./
+RUN yarn build
+
+# Stage 2: Build the backend
 FROM python:3.13-bullseye
 
 # Install dependencies for SMB mounting and other tools
@@ -22,6 +33,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the application code
 COPY ./src /app
 WORKDIR /app
+
+# Copy the built frontend from the previous stage
+COPY --from=frontend-builder /app/frontend/dist /app/frontend
 
 # Default command (can be overridden in production)
 CMD ["python", "main.py"]
