@@ -1,3 +1,7 @@
 python-dotenv
 watchdog
 flask
+flask-cors
+pdfservices-sdk
+mistralai
+PyMuPDF

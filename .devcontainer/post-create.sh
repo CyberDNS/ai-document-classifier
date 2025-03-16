@@ -9,6 +9,11 @@ sudo apt-get install -y cifs-utils
 pip install --upgrade pip
 pip install --no-cache-dir -r requirements.txt 
 
+# Set locale to en_US.UTF-8
+sudo apt-get install -y locales
+sudo locale-gen en_US.UTF-8
+sudo update-locale LANG=en_US.UTF-8
+
 # Load environment variables from .env file
 set -a
 . ./.env
@@ -32,7 +37,7 @@ SMB_SERVER=${SMB_SERVER%/}
 sudo mkdir -p "$SMB_MOUNTPOINT"
 
 # Mount SMB share (single-line command)
-sudo mount -t cifs "$SMB_SERVER" "$SMB_MOUNTPOINT" -o "username=$SMB_USERNAME,password=$SMB_PASSWORD,uid=$(id -u),gid=$(id -g)"
+sudo mount -t cifs "$SMB_SERVER" "$SMB_MOUNTPOINT" -o "username=$SMB_USERNAME,password=$SMB_PASSWORD,uid=$(id -u),gid=$(id -g),iocharset=utf8"
 
 # Check if mount succeeded
 if mount | grep -q "$SMB_MOUNTPOINT"; then
