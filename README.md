@@ -1,31 +1,94 @@
 # AI document classifier
- The purpose of this project is to create a document classifier for all kind of documents that I receive. It uses the OpenAI API to classify the documents. It provides also a simple UI to adapt the different properties that it detected on the document.
+ The purpose of this project is to create a document classifier for all kind of documents that I receive. It uses the Mistral API to classify the documents. It provides also a simple UI to adapt the different properties that it detected on the document.
 
-![Image](assets/GUI-1.png)
+![Image](assets/GUI-2.png)
+
+## Installation
+
+Currently the docker image is not available in a public repository. You can build the image by running the following command:
+
+```bash
+docker build -t ai-document-classifier .
+```
+
+## Running the application
+
+To run the application, you can use the following command:
+
+```bash
+docker run -p 5298:5298 \
+  -e SMB_USERNAME=dms \
+  -e SMB_PASSWORD=SmbPassword123 \
+  -e SMB_SERVER=//mysmbserver/dms \
+  -e SMB_MOUNTPOINT=/mnt/dms_scans \
+  -e DATA_PATH=/data \
+  -e ADOBE_CLIENT_ID=AdobeApiClientId \
+  -e ADOBE_CLIENT_SECRET=AdobeApiClientSecret \
+  -e MISTRAL_API_KEY=MistralApiKey \
+  -v /path/to/data:/data \
+  ai-document-classifier
+```
 
 ## Usage
 
 ### Configuration
 
-Create a config.json file with the following content in the input folder for your documents.
+Create a config.json file with the following content in the data folder.
     
 ```json
 {
-    "api_key": "Your OpenAI API key",
-    "sources": ["Grandma", "Good Friend", "Family"],
-    "destinations": ["John Doe", "Jane Doe", "Myself"],
-    "classifications": ["Personal", "Receipt", "Work", "Finance", "Health", "Legal", "Other"]
-  }
+  "categories": [
+    "INVOICES_AND_WARRANTIES",
+    "HEALTHCARE",
+    "PETS",
+    "HOME_RELATED",
+    "CARS_RELATED",
+    "WORK_RELATED",
+    "BANKING",
+    "TAX",
+    "LICENCES",
+    "OTHERS"
+  ],
+  "sources": [
+    "Office for National GitHub Projects"
+  ],
+  "destinations": [
+    "John Doe"
+  ]
+}
 ```
 
-If you add sources and description suggestions via the GUI, an additional file will be created in the input folder called additional_data.json. This file will be used to suggest sources and descriptions in the future.
+### Environment Variables Documentation
 
-### Standalone
+#### SMB_USERNAME
+- **Description**: Username for SMB (Server Message Block) authentication.
+- **Example**: `dms`
 
-You need to have docker or docker desktop installed on your computer.
+#### SMB_PASSWORD
+- **Description**: Password for SMB authentication.
+- **Example**: `SmbPassword123`
 
-Copy the run.sh file to your computer then modify the input and output directories to the desired locations. You can also modify the port number for the UI (default is 5123).
+#### SMB_SERVER
+- **Description**: URL of the SMB server.
+- **Example**: `//mysmbserver/dms`
 
-### Docker
+#### SMB_MOUNTPOINT
+- **Description**: Local mount point for the SMB share.
+- **Example**: `/mnt/dms_scans`
 
-Feel free to run the docker container on a server. This will keept the UI available and you can simply copy new documents to the input folder and the click on the "Classify" button.
+#### DATA_PATH
+- **Description**: Path to the data directory.
+- **Example**: `/data`
+
+#### ADOBE_CLIENT_ID
+- **Description**: Client ID for Adobe API authentication.
+- **Example**: `AdobeApiClientId`
+
+#### ADOBE_CLIENT_SECRET
+- **Description**: Client Secret for Adobe API authentication.
+- **Example**: `AdobeApiClientSecret`
+
+#### MISTRAL_API_KEY
+- **Description**: API key for Mistral service.
+- **Example**: `MistralApiKey`
+
